@@ -165,7 +165,7 @@ export class CollectionBase extends React.Component<InternalProps> {
 
     invariant(collection, 'collection is required');
 
-    const { slug, authorUsername: userId } = collection;
+    const { slug, authorId: userId } = collection;
 
     invariant(slug, 'slug is required');
     invariant(userId, 'userId is required');
@@ -174,7 +174,7 @@ export class CollectionBase extends React.Component<InternalProps> {
       deleteCollection({
         errorHandlerId: errorHandler.id,
         slug,
-        userId,
+        userId: String(userId),
       }),
     );
   };
@@ -212,32 +212,42 @@ export class CollectionBase extends React.Component<InternalProps> {
       addonsPageChanged = true;
     }
 
-    if (
-      collection &&
-      (collection.slug.toLowerCase() !== params.slug.toLowerCase() ||
-        collection.authorUsername.toLowerCase() !== params.userId.toLowerCase())
-    ) {
-      collectionChanged = true;
+    if (collection) {
+      let isSameCollectionUser;
+      // Is `userId` a numeric ID?
+      if (/^\d+$/.test(params.userId)) {
+        isSameCollectionUser = `${collection.authorId}` === params.userId;
+      } else {
+        isSameCollectionUser =
+          collection.authorUsername.toLowerCase() ===
+          params.userId.toLowerCase();
+      }
+
+      if (
+        collection.slug.toLowerCase() !== params.slug.toLowerCase() ||
+        isSameCollectionUser === false
+      ) {
+        collectionChanged = true;
+      }
     }
 
     // See: https://github.com/mozilla/addons-frontend/issues/4271
-    if (
-      !collectionChanged &&
-      collection &&
-      (params.userId !== collection.authorUsername ||
-        params.slug !== collection.slug)
-    ) {
-      const { lang, clientApp } = this.props;
+    if (!collectionChanged && collection) {
+      if (params.slug !== collection.slug || !/^\d+$/.test(params.userId)) {
+        const { editing, lang, clientApp } = this.props;
 
-      this.props.dispatch(
-        sendServerRedirect({
-          status: 301,
-          url: `/${lang}/${clientApp}/collections/${
-            collection.authorUsername
-          }/${collection.slug}/`,
-        }),
-      );
-      return;
+        const path = editing
+          ? collectionEditUrl({ collection })
+          : collectionUrl({ collection });
+
+        this.props.dispatch(
+          sendServerRedirect({
+            status: 301,
+            url: `/${lang}/${clientApp}${path}`,
+          }),
+        );
+        return;
+      }
     }
 
     if (!collection || collectionChanged) {
@@ -246,7 +256,7 @@ export class CollectionBase extends React.Component<InternalProps> {
           errorHandlerId: errorHandler.id,
           filters,
           slug: params.slug,
-          userId: params.userId,
+          userId: String(params.userId),
         }),
       );
 
@@ -259,7 +269,7 @@ export class CollectionBase extends React.Component<InternalProps> {
           errorHandlerId: errorHandler.id,
           filters,
           slug: params.slug,
-          userId: params.userId,
+          userId: String(params.userId),
         }),
       );
     }
@@ -270,7 +280,7 @@ export class CollectionBase extends React.Component<InternalProps> {
 
     invariant(collection, 'collection is required');
 
-    const { slug, authorUsername: userId } = collection;
+    const { slug, authorId: userId } = collection;
 
     invariant(slug, 'slug is required');
     invariant(userId, 'userId is required');
@@ -297,7 +307,7 @@ export class CollectionBase extends React.Component<InternalProps> {
           page,
         },
         slug,
-        userId,
+        userId: String(userId),
       }),
     );
 
@@ -322,7 +332,7 @@ export class CollectionBase extends React.Component<InternalProps> {
 
     invariant(collection, 'collection is required');
 
-    const { slug, authorUsername: userId } = collection;
+    const { slug, authorId: userId } = collection;
 
     invariant(slug, 'slug is required');
     invariant(userId, 'userId is required');
@@ -333,7 +343,7 @@ export class CollectionBase extends React.Component<InternalProps> {
         errorHandlerId: errorHandler.id,
         filters,
         slug,
-        userId,
+        userId: String(userId),
       }),
     );
   };
@@ -347,7 +357,7 @@ export class CollectionBase extends React.Component<InternalProps> {
 
     invariant(collection, 'collection is required');
 
-    const { slug, authorUsername: userId } = collection;
+    const { slug, authorId: userId } = collection;
 
     invariant(slug, 'slug is required');
     invariant(userId, 'userId is required');
@@ -359,7 +369,7 @@ export class CollectionBase extends React.Component<InternalProps> {
         notes,
         filters,
         slug,
-        userId,
+        userId: String(userId),
       }),
     );
   };
